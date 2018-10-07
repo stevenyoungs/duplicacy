@@ -47,7 +47,10 @@ const (
 	IO_REPARSE_TAG_DEDUP             = 0x80000013
 	SYMBOLIC_LINK_FLAG_DIRECTORY     = 0x1
 
-	FILE_READ_ATTRIBUTES = 0x0080
+	FILE_READ_ATTRIBUTES                 = 0x00000080
+	FILE_ATTRIBUTE_OFFLINE               = 0x00001000
+	FILE_ATTRIBUTE_RECALL_ON_OPEN        = 0x00040000
+	FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS = 0x00400000
 )
 
 // We copied golang source code for Readlink but made a simple modification here:  use FILE_READ_ATTRIBUTES instead of
@@ -130,4 +133,15 @@ func joinPath(components ...string) string {
 func SplitDir(fullPath string) (dir string, file string) {
 	i := strings.LastIndex(fullPath, "\\")
 	return fullPath[:i+1], fullPath[i+1:]
+}
+
+// IsOffline returns true if the file attributes indicate that the file is currently offline. Returns false otherwise.
+func (entry *Entry) IsOffline(fileInfo os.FileInfo) bool {
+	sys := fileInfo.Sys().(*syscall.Win32FileAttributeData)
+	offline := (sys.FileAttributes & (FILE_ATTRIBUTE_OFFLINE | FILE_ATTRIBUTE_RECALL_ON_DATA_ACCESS | FILE_ATTRIBUTE_RECALL_ON_OPEN)) != 0
+	if offline {
+		LOG_TRACE("FILE_ATTRIBUTES", "0x%08x %s", sys.FileAttributes, entry.Path)
+	}
+
+	return offline
 }

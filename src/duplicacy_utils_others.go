@@ -92,3 +92,7 @@ func joinPath(components ...string) string {
 func SplitDir(fullPath string) (dir string, file string) {
 	return path.Split(fullPath)
 }
+
+func (entry *Entry) IsOffline(fileInfo os.FileInfo) bool {
+	return false
+}
